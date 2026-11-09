@@ -1,0 +1,12 @@
+{
+  "format": "cvp-replay-pack-v1",
+  "capability_id": "math.percentage",
+  "calculation_version": "1.2.0",
+  "revision": "public-example-1",
+  "profile": "percentage-v1",
+  "bindings": {},
+  "scope": "Illustrative public reference cases for 3 percentage modes.",
+  "files": {
+    "cases.json": "fc06a38d5f1a90b9ef58e7e76ca84aa74e30e265d6f708469d46bd004d609bb0"
+  }
+}

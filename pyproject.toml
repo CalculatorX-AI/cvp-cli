@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cvp-replay-cli"
+version = "0.1.0"
+description = "Independent verifier for versioned CVP replay evidence"
+requires-python = ">=3.9"
+readme = "README.md"
+license = {file = "LICENSE"}
+dependencies = []
+
+[project.scripts]
+cvp = "cvp_cli.__main__:main"
+
+[tool.setuptools]
+packages = ["cvp_cli"]

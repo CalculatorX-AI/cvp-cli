@@ -1,0 +1,133 @@
+{
+  "units": {
+    "cx:m": {
+      "transforms": {
+        "length": {
+          "reference": "cx:m",
+          "scale": "1",
+          "offset": "0",
+          "pi_power": 0,
+          "roles": [
+            "scalar"
+          ]
+        }
+      },
+      "source": "https://www.nist.gov/pml/special-publication-330/sp-330-section-2"
+    },
+    "cx:km": {
+      "transforms": {
+        "length": {
+          "reference": "cx:m",
+          "scale": "1000",
+          "offset": "0",
+          "pi_power": 0,
+          "roles": [
+            "scalar"
+          ]
+        }
+      },
+      "source": "https://www.nist.gov/pml/special-publication-330/sp-330-section-2"
+    },
+    "cx:ft_i": {
+      "transforms": {
+        "length": {
+          "reference": "cx:m",
+          "scale": "381/1250",
+          "offset": "0",
+          "pi_power": 0,
+          "roles": [
+            "scalar"
+          ]
+        }
+      },
+      "source": "https://www.nist.gov/pml/us-surveyfoot/revised-unit-conversion-factors"
+    },
+    "cx:K": {
+      "transforms": {
+        "temperature": {
+          "reference": "cx:K",
+          "scale": "1",
+          "offset": "0",
+          "pi_power": 0,
+          "roles": [
+            "point",
+            "interval"
+          ]
+        }
+      },
+      "source": "https://www.nist.gov/pml/special-publication-330/sp-330-section-2"
+    },
+    "cx:degC": {
+      "transforms": {
+        "temperature": {
+          "reference": "cx:K",
+          "scale": "1",
+          "offset": "5463/20",
+          "pi_power": 0,
+          "roles": [
+            "point",
+            "interval"
+          ]
+        }
+      },
+      "source": "https://www.nist.gov/pml/special-publication-330/sp-330-section-2"
+    },
+    "cx:degF": {
+      "transforms": {
+        "temperature": {
+          "reference": "cx:K",
+          "scale": "5/9",
+          "offset": "45967/180",
+          "pi_power": 0,
+          "roles": [
+            "point",
+            "interval"
+          ]
+        }
+      },
+      "source": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-appendix-b-conversion-factors/nist-guide-si-appendix-b8"
+    },
+    "cx:rad": {
+      "transforms": {
+        "plane_angle": {
+          "reference": "cx:rad",
+          "scale": "1",
+          "offset": "0",
+          "pi_power": 0,
+          "roles": [
+            "scalar"
+          ]
+        }
+      },
+      "source": "https://www.nist.gov/pml/special-publication-330/sp-330-section-5"
+    },
+    "cx:deg": {
+      "transforms": {
+        "plane_angle": {
+          "reference": "cx:rad",
+          "scale": "1/180",
+          "offset": "0",
+          "pi_power": 1,
+          "roles": [
+            "scalar"
+          ]
+        }
+      },
+      "source": "https://www.nist.gov/pml/special-publication-330/sp-330-section-5"
+    },
+    "cx:Hz": {
+      "transforms": {
+        "frequency": {
+          "reference": "cx:Hz",
+          "scale": "1",
+          "offset": "0",
+          "pi_power": 0,
+          "roles": [
+            "scalar"
+          ]
+        }
+      },
+      "source": "https://www.nist.gov/pml/special-publication-330/sp-330-section-2"
+    }
+  }
+}

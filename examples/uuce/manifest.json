@@ -1,0 +1,18 @@
+{
+  "format": "cvp-replay-pack-v1",
+  "capability_id": "units.convert",
+  "calculation_version": "0.1.1",
+  "revision": "public-example-1",
+  "profile": "uuce-v1",
+  "bindings": {
+    "version": "0.3.0-preview.3",
+    "content_digest": "75c66c1e40753435643e728731261a8b7e4c760649cb662c5883249d1f2ecacb",
+    "execution_projection_sha256": "b22cd71baa090908c21a75a86b52d87cab1be0bd2f965156e40c166f2442fbc4",
+    "integrity_manifest_sha256": "ec4360ac1db7cfa18550d955fe4afca333295b74b2348bfd6a40cf8419d0aef0"
+  },
+  "scope": "Illustrative public reference cases for 9 unit definitions. This is a sample of the pinned UUCE contract.",
+  "files": {
+    "cases.json": "27061a8d3d8b62fa9584958dd721df9ebb42fc6247af9f6abf960e07b45657d8",
+    "reference-units.json": "e732de94ade73d62caf30789cc25be7affa3dffde41efadbb3b640149899ac02"
+  }
+}

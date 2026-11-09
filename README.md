@@ -1,0 +1,96 @@
+# CVP CLI
+
+An offline-first verifier for public, versioned computational evidence. The same
+CLI verifies UUCE unit conversions and basic calculators using capability
+profiles. A verifier needs this repository, a public pack and a trust anchor
+obtained separately from the pack.
+
+## Quick start
+
+Python 3.9 or newer. Run from this repository with the standard library:
+
+```sh
+python3 -m cvp_cli verify examples/uuce \
+  --manifest-sha256 9bbb69129e989fa90326650a8d07526b65e272446c3efb4b98c581b3990ca967
+
+python3 -m cvp_cli verify examples/percentage \
+  --manifest-sha256 9004d6f27099be436ea94efc0bd9beb607f8ebf615b24ba7664eca28e43cb288
+```
+
+To install the `cvp` command in an active Python environment:
+
+```sh
+python3 -m pip install .
+cvp --help
+```
+
+Use `--json` for an automation-friendly report. The sample pins above
+authenticate the checked-in examples when obtained from a trusted checkout
+of this repository. For a downloaded release, obtain the digest from a trusted
+release record, or use a separately trusted publisher public key. Computing a
+new pin from the download only gives a local fingerprint.
+
+## What the report means
+
+| Stage | Evidence checked |
+| --- | --- |
+| `artifact_integrity` | Manifest bytes match an external SHA-256 pin or detached signature. All listed artifacts match their manifest hashes. |
+| `reference_replay` | Independent reference calculations and structured errors match the declared expected values for the listed cases. |
+| `live_probe` | Optional. Responses from the chosen HTTPS origin match the pinned capability version and the replayed cases. The report includes the observation interval. |
+
+Exit codes are **0** for a pass, **1** for a result mismatch and **2** for
+malformed evidence, failed authentication, an unsupported contract or an
+unavailable or invalid live response. An omitted live probe reports
+`NOT_RUN`.
+
+The examples are public samples. UUCE includes 14 cases for 9 definitions
+under `units.convert@0.1.1` and registry snapshot `0.3.0-preview.3`.
+Percentage includes 8 cases across 3 modes under `math.percentage@1.2.0`.
+These results cover the listed cases. Production observations are a separate
+result from the publisher's CVP attestation. This release performs independent
+reference replay and optional API comparison. Offline replay of the published
+production executable would require a separately released, pinned execution
+artifact.
+
+## Compare with the production API
+
+Add `--live https://www.calculatorx.com` to either example command. Use repeatable
+`--live-case ID` flags to select a subset. This sends only the selected pack
+inputs to the explicit HTTPS origin, after offline replay succeeds.
+The CLI chooses the endpoint from the installed profile, pins the calculation
+version, disables redirects and bounds response sizes. Local replay works
+without network access.
+
+## Publish a pack
+
+1. Author inputs, expected results, derivations and references under
+   [the pack protocol](PROTOCOL.md). Use independent references and fixtures
+   that are cleared for public redistribution.
+2. Pin every data file in the manifest. Tag the CLI and publish the versioned
+   pack with its exact manifest SHA-256 in a trusted release record. Preserve
+   the original file bytes for historical replay.
+3. For detached signatures, sign the exact manifest bytes with an existing
+   publisher RSA key kept outside the repository. Publish the signature with
+   the pack and distribute the public key through a trusted channel.
+
+```sh
+openssl dgst -sha256 -sign /secure/path/publisher-private.pem \
+  -out ./pack/manifest.sig ./pack/manifest.json
+
+cvp verify ./pack --public-key /trusted/path/publisher-public.pem --json
+```
+
+The CLI uses OpenSSL only for detached signature verification. The SHA-256 pin
+path needs only Python. Packs are data directories. The verifier loads JSON and
+selects the validation code from the installed CLI. The examples include
+new public fixtures and cited reference definitions.
+
+## Development
+
+```sh
+python3 -m unittest discover -s tests -v
+```
+
+See [PROTOCOL.md](PROTOCOL.md) for the evidence contract and profile extension
+rules. The verifier code and original example data use the [MIT license](LICENSE).
+Linked reference publications retain their own terms.

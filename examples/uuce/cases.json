@@ -1,0 +1,310 @@
+{
+  "cases": [
+    {
+      "id": "two-international-feet",
+      "inputs": {
+        "value": "2",
+        "from_unit_id": "cx:ft_i",
+        "to_unit_id": "cx:m",
+        "quantity_kind": "length",
+        "role": "scalar",
+        "snapshot": "0.3.0-preview.3"
+      },
+      "expected": {
+        "exact": {
+          "numerator": "381",
+          "denominator": "625",
+          "pi_power": 0
+        },
+        "decimal": "6.096e-1",
+        "binary64_hex": "3fe381d7dbf487fd",
+        "binary64_status": "finite"
+      },
+      "source": "https://www.nist.gov/pml/us-surveyfoot/revised-unit-conversion-factors",
+      "derivation": "2 × 0.3048 m = 0.6096 m."
+    },
+    {
+      "id": "length-reverse",
+      "inputs": {
+        "value": "381",
+        "from_unit_id": "cx:m",
+        "to_unit_id": "cx:ft_i",
+        "quantity_kind": "length",
+        "role": "scalar",
+        "snapshot": "0.3.0-preview.3"
+      },
+      "expected": {
+        "exact": {
+          "numerator": "1250",
+          "denominator": "1",
+          "pi_power": 0
+        },
+        "decimal": "1.25e3",
+        "binary64_hex": "4093880000000000",
+        "binary64_status": "finite"
+      },
+      "source": "https://www.nist.gov/pml/us-surveyfoot/revised-unit-conversion-factors",
+      "derivation": "381 ÷ (381/1250) = 1250."
+    },
+    {
+      "id": "celsius-point",
+      "inputs": {
+        "value": "0",
+        "from_unit_id": "cx:degC",
+        "to_unit_id": "cx:K",
+        "quantity_kind": "temperature",
+        "role": "point",
+        "snapshot": "0.3.0-preview.3"
+      },
+      "expected": {
+        "exact": {
+          "numerator": "5463",
+          "denominator": "20",
+          "pi_power": 0
+        },
+        "decimal": "2.7315e2",
+        "binary64_hex": "4071126666666666",
+        "binary64_status": "finite"
+      },
+      "source": "https://www.nist.gov/pml/special-publication-330/sp-330-section-2",
+      "derivation": "T/K = 0 + 273.15."
+    },
+    {
+      "id": "fahrenheit-interval",
+      "inputs": {
+        "value": "18",
+        "from_unit_id": "cx:degF",
+        "to_unit_id": "cx:degC",
+        "quantity_kind": "temperature",
+        "role": "interval",
+        "snapshot": "0.3.0-preview.3"
+      },
+      "expected": {
+        "exact": {
+          "numerator": "10",
+          "denominator": "1",
+          "pi_power": 0
+        },
+        "decimal": "1e1",
+        "binary64_hex": "4024000000000000",
+        "binary64_status": "finite"
+      },
+      "source": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-appendix-b-conversion-factors/nist-guide-si-appendix-b8",
+      "derivation": "An interval scales by 5/9. 18 × 5/9 = 10."
+    },
+    {
+      "id": "absolute-zero",
+      "inputs": {
+        "value": "-273.15",
+        "from_unit_id": "cx:degC",
+        "to_unit_id": "cx:K",
+        "quantity_kind": "temperature",
+        "role": "point",
+        "snapshot": "0.3.0-preview.3"
+      },
+      "expected": {
+        "exact": {
+          "numerator": "0",
+          "denominator": "1",
+          "pi_power": 0
+        },
+        "decimal": "0",
+        "binary64_hex": "0000000000000000",
+        "binary64_status": "finite"
+      },
+      "source": "https://www.nist.gov/pml/special-publication-330/sp-330-section-2",
+      "derivation": "−273.15 + 273.15 = 0 K."
+    },
+    {
+      "id": "below-absolute-zero",
+      "inputs": {
+        "value": "-273.1500000000000001",
+        "from_unit_id": "cx:degC",
+        "to_unit_id": "cx:K",
+        "quantity_kind": "temperature",
+        "role": "point",
+        "snapshot": "0.3.0-preview.3"
+      },
+      "expected": {
+        "error": {
+          "code": "VALUE_OUT_OF_RANGE",
+          "field": "value"
+        }
+      },
+      "source": "https://www.calculatorx.com/developers/units",
+      "derivation": "Exact input plus 273.15 K gives a negative temperature point."
+    },
+    {
+      "id": "half-turn",
+      "inputs": {
+        "value": "180",
+        "from_unit_id": "cx:deg",
+        "to_unit_id": "cx:rad",
+        "quantity_kind": "plane_angle",
+        "role": "scalar",
+        "snapshot": "0.3.0-preview.3"
+      },
+      "expected": {
+        "exact": {
+          "numerator": "1",
+          "denominator": "1",
+          "pi_power": 1
+        },
+        "decimal": "3.141592653589793238462643383279503e0",
+        "binary64_hex": "400921fb54442d18",
+        "binary64_status": "finite"
+      },
+      "source": "https://www.nist.gov/pml/special-publication-330/sp-330-section-5",
+      "derivation": "180 × π/180 = π rad. The decimal follows the pinned 34-digit policy."
+    },
+    {
+      "id": "angle-pi-cancels",
+      "inputs": {
+        "value": "90",
+        "from_unit_id": "cx:deg",
+        "to_unit_id": "cx:deg",
+        "quantity_kind": "plane_angle",
+        "role": "scalar",
+        "snapshot": "0.3.0-preview.3"
+      },
+      "expected": {
+        "exact": {
+          "numerator": "90",
+          "denominator": "1",
+          "pi_power": 0
+        },
+        "decimal": "9e1",
+        "binary64_hex": "4056800000000000",
+        "binary64_status": "finite"
+      },
+      "source": "https://www.nist.gov/pml/special-publication-330/sp-330-section-5",
+      "derivation": "The symbolic scale π/180 cancels in an identity conversion."
+    },
+    {
+      "id": "cross-kind",
+      "inputs": {
+        "value": "1",
+        "from_unit_id": "cx:m",
+        "to_unit_id": "cx:Hz",
+        "quantity_kind": "length",
+        "role": "scalar",
+        "snapshot": "0.3.0-preview.3"
+      },
+      "expected": {
+        "error": {
+          "code": "QUANTITY_KIND_MISMATCH",
+          "field": "quantity_kind"
+        }
+      },
+      "source": "https://www.calculatorx.com/developers/units",
+      "derivation": "Hertz does not support the length quantity kind."
+    },
+    {
+      "id": "scalar-temperature",
+      "inputs": {
+        "value": "1",
+        "from_unit_id": "cx:degC",
+        "to_unit_id": "cx:K",
+        "quantity_kind": "temperature",
+        "role": "scalar",
+        "snapshot": "0.3.0-preview.3"
+      },
+      "expected": {
+        "error": {
+          "code": "UNIT_ROLE_MISMATCH",
+          "field": "role"
+        }
+      },
+      "source": "https://www.calculatorx.com/developers/units",
+      "derivation": "The temperature conversion requires a point or interval role."
+    },
+    {
+      "id": "unavailable-snapshot",
+      "inputs": {
+        "value": "1",
+        "from_unit_id": "cx:m",
+        "to_unit_id": "cx:ft_i",
+        "quantity_kind": "length",
+        "role": "scalar",
+        "snapshot": "unavailable"
+      },
+      "expected": {
+        "error": {
+          "code": "SNAPSHOT_MISMATCH",
+          "field": "snapshot"
+        }
+      },
+      "source": "https://www.calculatorx.com/developers/units",
+      "derivation": "The requested snapshot is outside the pinned contract."
+    },
+    {
+      "id": "decimal-even-midpoint",
+      "inputs": {
+        "value": "1.2345678901234567890123456789012345",
+        "from_unit_id": "cx:m",
+        "to_unit_id": "cx:m",
+        "quantity_kind": "length",
+        "role": "scalar",
+        "snapshot": "0.3.0-preview.3"
+      },
+      "expected": {
+        "exact": {
+          "numerator": "2469135780246913578024691357802469",
+          "denominator": "2000000000000000000000000000000000",
+          "pi_power": 0
+        },
+        "decimal": "1.234567890123456789012345678901234e0",
+        "binary64_hex": "3ff3c0ca428c59fb",
+        "binary64_status": "finite"
+      },
+      "source": "https://www.calculatorx.com/developers/units",
+      "derivation": "The 35th digit is exactly 5. Retain the even 34th digit."
+    },
+    {
+      "id": "binary64-overflow",
+      "inputs": {
+        "value": "1e308",
+        "from_unit_id": "cx:km",
+        "to_unit_id": "cx:m",
+        "quantity_kind": "length",
+        "role": "scalar",
+        "snapshot": "0.3.0-preview.3"
+      },
+      "expected": {
+        "exact": {
+          "numerator": "100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "denominator": "1",
+          "pi_power": 0
+        },
+        "decimal": "1e311",
+        "binary64_hex": null,
+        "binary64_status": "overflow"
+      },
+      "source": "https://www.calculatorx.com/developers/units",
+      "derivation": "1e308 × 1000 = 1e311, beyond finite binary64."
+    },
+    {
+      "id": "binary64-underflow",
+      "inputs": {
+        "value": "0.000000000000000001e-308",
+        "from_unit_id": "cx:m",
+        "to_unit_id": "cx:km",
+        "quantity_kind": "length",
+        "role": "scalar",
+        "snapshot": "0.3.0-preview.3"
+      },
+      "expected": {
+        "exact": {
+          "numerator": "1",
+          "denominator": "100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "pi_power": 0
+        },
+        "decimal": "1e-329",
+        "binary64_hex": null,
+        "binary64_status": "underflow"
+      },
+      "source": "https://www.calculatorx.com/developers/units",
+      "derivation": "1e−326 ÷ 1000 = 1e−329, below half the least positive binary64 subnormal."
+    }
+  ]
+}

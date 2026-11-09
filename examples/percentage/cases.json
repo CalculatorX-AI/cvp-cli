@@ -1,0 +1,126 @@
+{
+  "cases": [
+    {
+      "id": "of-exact",
+      "inputs": {
+        "mode": "of",
+        "p": "12.5",
+        "x": "80"
+      },
+      "expected": {
+        "mode": "of",
+        "unit": null,
+        "binary64_hex": "4024000000000000"
+      },
+      "source": "https://www.calculatorx.com/calc/math/percentage",
+      "derivation": "12.5 × 80 / 100 = 10."
+    },
+    {
+      "id": "of-negative",
+      "inputs": {
+        "mode": "of",
+        "p": "-25",
+        "x": "80"
+      },
+      "expected": {
+        "mode": "of",
+        "unit": null,
+        "binary64_hex": "c034000000000000"
+      },
+      "source": "https://www.calculatorx.com/calc/math/percentage",
+      "derivation": "−25 × 80 / 100 = −20."
+    },
+    {
+      "id": "of-zero",
+      "inputs": {
+        "mode": "of",
+        "p": "0",
+        "x": "80"
+      },
+      "expected": {
+        "mode": "of",
+        "unit": null,
+        "binary64_hex": "0000000000000000"
+      },
+      "source": "https://www.calculatorx.com/calc/math/percentage",
+      "derivation": "0 × 80 / 100 = 0."
+    },
+    {
+      "id": "part-as-percentage",
+      "inputs": {
+        "mode": "is-what",
+        "x": "5",
+        "y": "20"
+      },
+      "expected": {
+        "mode": "is-what",
+        "unit": "%",
+        "binary64_hex": "4039000000000000"
+      },
+      "source": "https://www.calculatorx.com/calc/math/percentage",
+      "derivation": "100 × 5 / 20 = 25 percent."
+    },
+    {
+      "id": "part-as-repeating-percentage",
+      "inputs": {
+        "mode": "is-what",
+        "x": "1",
+        "y": "3"
+      },
+      "expected": {
+        "mode": "is-what",
+        "unit": "%",
+        "binary64_hex": "4040aaaaaaaaaaab"
+      },
+      "source": "https://www.calculatorx.com/calc/math/percentage",
+      "derivation": "100/3 rounds to the nearest binary64, 33.333333333333336."
+    },
+    {
+      "id": "recover-whole",
+      "inputs": {
+        "mode": "of-what",
+        "x": "30",
+        "p": "25"
+      },
+      "expected": {
+        "mode": "of-what",
+        "unit": null,
+        "binary64_hex": "405e000000000000"
+      },
+      "source": "https://www.calculatorx.com/calc/math/percentage",
+      "derivation": "100 × 30 / 25 = 120."
+    },
+    {
+      "id": "zero-whole",
+      "inputs": {
+        "mode": "is-what",
+        "x": "5",
+        "y": "0"
+      },
+      "expected": {
+        "error": {
+          "code": "DIVISION_BY_ZERO",
+          "field": "y"
+        }
+      },
+      "source": "https://www.calculatorx.com/calc/math/percentage",
+      "derivation": "The denominator Y is zero."
+    },
+    {
+      "id": "zero-rate",
+      "inputs": {
+        "mode": "of-what",
+        "x": "30",
+        "p": "0"
+      },
+      "expected": {
+        "error": {
+          "code": "DIVISION_BY_ZERO",
+          "field": "p"
+        }
+      },
+      "source": "https://www.calculatorx.com/calc/math/percentage",
+      "derivation": "The denominator P is zero."
+    }
+  ]
+}
