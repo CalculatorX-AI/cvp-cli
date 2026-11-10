@@ -1,0 +1,10 @@
+{
+  "capability_id": "units.convert",
+  "calculation_version": "0.1.1",
+  "registry_version": "0.3.0-preview.3",
+  "cvp_core_sha256": "151ae77934023fa10e8c6e4fdb34352a6aee9e973a9b345e304f5c34791518e8",
+  "href": "/data/units/0.3.0-preview.3/execution-0.1.1.mjs",
+  "sha256": "9d7f07beb9b73c41f63aae5a0b720fcd29837fe06426022efe514f20ddf331ed",
+  "runtime": "node22",
+  "bundler": "esbuild 0.25.3"
+}
