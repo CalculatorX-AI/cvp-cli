@@ -1,0 +1,25 @@
+{
+  "format": "calculatorx-cvp-replay-releases-v1",
+  "cli_repository": "https://github.com/CalculatorX-AI/cvp-cli",
+  "packs": [
+    {
+      "capability_id": "units.convert",
+      "calculation_version": "0.1.1",
+      "revision": "public-replay-3",
+      "profile": "uuce-v1",
+      "scope": "Public electrical and magnetic conversions for 50 unit definitions across 12 quantity kinds. Includes exact prefixes, ampere-hours, elementary charge, electrical material properties, apparent and reactive power, and gauss.",
+      "minimum_cli_version": "0.1.0",
+      "case_count": 39,
+      "base_path": "/developers/cvp/packs/units.convert/0.1.1/public-replay-3",
+      "manifest_sha256": "f9cd1cc85d1c109dcc266c2e460e0535c72249307db8437bafce6edacfe51710",
+      "files": [
+        "manifest.json",
+        "cases.json",
+        "reference-units.json"
+      ],
+      "cvp_verification_revision": "2026-11-05.uuce-c6-v1",
+      "cvp_core_sha256": "151ae77934023fa10e8c6e4fdb34352a6aee9e973a9b345e304f5c34791518e8",
+      "cvp_manifest": "https://www.calculatorx.com/evidence/units.convert/0.1.1/2026-11-05.uuce-c6-v1.151ae7793402.cvp.json"
+    }
+  ]
+}

@@ -33,9 +33,9 @@ new pin from the download only gives a local fingerprint.
 CalculatorX publishes versioned downloads and release pins on the
 [public replay packs page](https://www.calculatorx.com/developers/cvp#replay-packs).
 Version 0.1.1 adds decimal-text replay for Celsius/Kelvin and psi/bar.
-The [public-replay-1 release record](releases/public-replay-1.json) preserves
-the SHA-256 pins in this repository so they can be obtained separately from
-the pack downloads.
+The [release records](releases/) preserve the SHA-256 pins in this repository
+so they can be obtained separately from the pack downloads. The UUCE packs
+use the existing `uuce-v1` profile.
 
 ## What the report means
 

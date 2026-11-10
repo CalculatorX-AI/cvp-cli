@@ -1,0 +1,25 @@
+{
+  "format": "calculatorx-cvp-replay-releases-v1",
+  "cli_repository": "https://github.com/CalculatorX-AI/cvp-cli",
+  "packs": [
+    {
+      "capability_id": "units.convert",
+      "calculation_version": "0.1.1",
+      "revision": "public-replay-6",
+      "profile": "uuce-v1",
+      "scope": "Public engineering and information conversions for 65 unit definitions across 14 quantity kinds. Includes pressure, energy and calorie conventions, refrigeration power, force, torque, electrical prefixes, and decimal and binary information units.",
+      "minimum_cli_version": "0.1.0",
+      "case_count": 40,
+      "base_path": "/developers/cvp/packs/units.convert/0.1.1/public-replay-6",
+      "manifest_sha256": "15ef4599787c327a8f69bf3ca13059ad7e26a17a7a05b6eb5244fc5ff89b4396",
+      "files": [
+        "manifest.json",
+        "cases.json",
+        "reference-units.json"
+      ],
+      "cvp_verification_revision": "2026-11-05.uuce-c6-v1",
+      "cvp_core_sha256": "151ae77934023fa10e8c6e4fdb34352a6aee9e973a9b345e304f5c34791518e8",
+      "cvp_manifest": "https://www.calculatorx.com/evidence/units.convert/0.1.1/2026-11-05.uuce-c6-v1.151ae7793402.cvp.json"
+    }
+  ]
+}

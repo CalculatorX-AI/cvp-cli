@@ -1,0 +1,25 @@
+{
+  "format": "calculatorx-cvp-replay-releases-v1",
+  "cli_repository": "https://github.com/CalculatorX-AI/cvp-cli",
+  "packs": [
+    {
+      "capability_id": "units.convert",
+      "calculation_version": "0.1.1",
+      "revision": "public-replay-4",
+      "profile": "uuce-v1",
+      "scope": "Public fluid, thermal, and structural conversions for 52 unit definitions across 16 quantity kinds. Includes flow, density, concentration, viscosity, thermal properties, temperature coefficients, and area moments.",
+      "minimum_cli_version": "0.1.0",
+      "case_count": 39,
+      "base_path": "/developers/cvp/packs/units.convert/0.1.1/public-replay-4",
+      "manifest_sha256": "31314a7a0fe6356bde67a9b718e7b183d37c0e24190d86ad709b2a307b75a00b",
+      "files": [
+        "manifest.json",
+        "cases.json",
+        "reference-units.json"
+      ],
+      "cvp_verification_revision": "2026-11-05.uuce-c6-v1",
+      "cvp_core_sha256": "151ae77934023fa10e8c6e4fdb34352a6aee9e973a9b345e304f5c34791518e8",
+      "cvp_manifest": "https://www.calculatorx.com/evidence/units.convert/0.1.1/2026-11-05.uuce-c6-v1.151ae7793402.cvp.json"
+    }
+  ]
+}

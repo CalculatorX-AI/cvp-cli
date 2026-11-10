@@ -1,0 +1,25 @@
+{
+  "format": "calculatorx-cvp-replay-releases-v1",
+  "cli_repository": "https://github.com/CalculatorX-AI/cvp-cli",
+  "packs": [
+    {
+      "capability_id": "units.convert",
+      "calculation_version": "0.1.1",
+      "revision": "public-replay-2",
+      "profile": "uuce-v1",
+      "scope": "Additional public cases for 51 unit definitions across 13 quantity kinds, including mass, elapsed time, speed, area, volume, section modulus, force, pressure, energy, power, frequency, information, and data rates.",
+      "minimum_cli_version": "0.1.0",
+      "case_count": 39,
+      "base_path": "/developers/cvp/packs/units.convert/0.1.1/public-replay-2",
+      "manifest_sha256": "26aaf7d8f1d704b8812b1f76145b23cf64fd6ff4a6f2d37b7b68c3472b44bce9",
+      "files": [
+        "manifest.json",
+        "cases.json",
+        "reference-units.json"
+      ],
+      "cvp_verification_revision": "2026-11-05.uuce-c6-v1",
+      "cvp_core_sha256": "151ae77934023fa10e8c6e4fdb34352a6aee9e973a9b345e304f5c34791518e8",
+      "cvp_manifest": "https://www.calculatorx.com/evidence/units.convert/0.1.1/2026-11-05.uuce-c6-v1.151ae7793402.cvp.json"
+    }
+  ]
+}
