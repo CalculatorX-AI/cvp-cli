@@ -68,6 +68,30 @@ The CLI chooses the endpoint from the installed profile, pins the calculation
 version, disables redirects and bounds response sizes. Local replay works
 without network access.
 
+### Require production preflight
+
+For CalculatorX UUCE `0.1.1`, supply a release record obtained separately
+from the pack, explicitly select cases, and declare their low-risk use.
+The CLI matches the authenticated pack to the release record, checks the
+production receipt and its expiry, and requires a matching approval for
+each request before executing it. The result still has to match the pinned
+CVP and registry bindings and the independent replay.
+
+```sh
+cvp verify ./public-replay-1 \
+  --manifest-sha256 4a02c7146ad66f8db17c7eb05a238cf485fe105a4f0fc15aa563e823bcbbfefa \
+  --release-record ./releases/public-replay-1.json \
+  --live https://www.calculatorx.com \
+  --live-case two-international-feet \
+  --use-case standalone_low_risk --json
+```
+
+Policy `1.0.0` covers scalar conversions between metres and international
+feet. A blocked case reports its preflight decision and exits with code 2
+without sending the conversion request for that case. Plain `--live`
+continues to provide result comparison. Preflight appears as
+`production_preflight` on each selected case in the JSON report.
+
 ## Publish a pack
 
 1. Author inputs, expected results, derivations and references under

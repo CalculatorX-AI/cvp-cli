@@ -34,13 +34,15 @@ def origin_url(value):
     return f"https://{parts.netloc}"
 
 
-def _response(origin, profile, inputs):
+def request_json(url, *, body=None, statuses=(200,), version=None):
+    headers = {"Accept": "application/json", "User-Agent": "cvp-replay-cli/0.1"}
+    if body is not None:
+        headers["Content-Type"] = "application/json"
+    if version is not None:
+        headers["CalculatorX-Spec-Version"] = version
     request = Request(
-        origin + profile.endpoint, data=json.dumps({"inputs": inputs}, allow_nan=False).encode("utf-8"),
-        headers={"Content-Type": "application/json", "Accept": "application/json",
-                 "CalculatorX-Spec-Version": profile.calculation_version,
-                 "User-Agent": "cvp-replay-cli/0.1"},
-        method="POST",
+        url, data=None if body is None else json.dumps(body, allow_nan=False).encode("utf-8"),
+        headers={**headers, "Cache-Control": "no-cache"},
     )
     try:
         try:
@@ -49,7 +51,7 @@ def _response(origin, profile, inputs):
             handle = error
         with handle:
             status = handle.getcode()
-            if status not in (200, 400, 409, 422):
+            if status not in statuses:
                 raise ProbeError(f"Unexpected HTTP {status}")
             raw = handle.read(MAX_RESPONSE_BYTES + 1)
     except (URLError, OSError, TimeoutError) as error:
@@ -65,8 +67,14 @@ def _response(origin, profile, inputs):
     return status, response
 
 
-def observe(origin, profile, inputs):
-    status, response = _response(origin, profile, inputs)
+def observe(origin, profile, inputs, *, binding=None):
+    body = {"inputs": inputs}
+    if binding is not None:
+        body["calculation_version"] = profile.calculation_version
+    status, response = request_json(
+        origin + profile.endpoint, body=body, version=profile.calculation_version,
+        statuses=(200,) if binding is not None else (200, 400, 409, 422),
+    )
     if response.get("capability_id") != profile.capability_id:
         raise ProbeError("Live capability ID differs")
     if response.get("calculation_version") != profile.calculation_version:
@@ -74,6 +82,14 @@ def observe(origin, profile, inputs):
     if status == 200:
         if response.get("status") != "success":
             raise ProbeError("HTTP 200 response lacks a success envelope")
+        if binding is not None:
+            verification = response.get("verification")
+            if (not isinstance(verification, dict) or verification.get("cvp") != "verified"
+                    or verification.get("calculation_version") != profile.calculation_version
+                    or verification.get("verification_revision") != binding["verification_revision"]
+                    or verification.get("evidence_digest") != binding["cvp_core_sha256"]
+                    or verification.get("execution_projection_sha256") != binding["execution_projection_sha256"]):
+                raise ProbeError("Live UUCE CVP binding differs from the approved request")
         try:
             return profile.observe(response, inputs)
         except PackError as error:
