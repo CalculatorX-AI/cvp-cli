@@ -20,3 +20,16 @@ jobs:
       - run: python -m unittest discover -s tests -v
       - run: python -m pip install .
       - run: cvp --version
+      - name: Check the release tag matches the installed CLI
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: test "$GITHUB_REF_NAME" = "v$(cvp --version)"
+  published-packs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Download and replay pinned releases
+        run: python -B -m scripts.verify_releases
