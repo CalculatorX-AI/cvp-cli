@@ -10,11 +10,17 @@ from .pack import SHA256, PackError, object_fields, require, valid_text
 
 DECIMAL = re.compile(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE]([+-]?[0-9]+))?\Z")
 UUCE_DECIMAL = re.compile(r"[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE]([+-]?(?:[0-2]?[0-9]{1,2}|30[0-8])))?\Z")
+CANONICAL_DECIMAL = re.compile(
+    r"[ \t]*([+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?(?:[0-2]?[0-9]{1,2}|3[01][0-9]|32[0-4]))?)[ \t]*\Z"
+)
 RATIONAL = re.compile(r"-?[0-9]{1,128}(?:/[1-9][0-9]{0,127})?\Z")
 UNIT_ID = re.compile(r"cx:[A-Za-z0-9_.-]{1,124}\Z")
 ROLES = {"scalar", "point", "interval"}
 PI = Fraction("3.14159265358979323846264338327950288419716939937510582097494459230781640628620899")
 UUCE_POLICY = "uuce-rational-pi-decimal34-v1"
+KELVIN_OFFSET = Fraction("273.15")
+# NIST SP 811: exact pound, standard gravity, inch, and bar definitions.
+BAR_PER_PSI = Fraction("0.45359237") * Fraction("9.80665") / Fraction("0.0254") ** 2 / 100000
 
 
 def bounded_decimal(value, *, uuce=False):
@@ -164,6 +170,63 @@ class UuceReference:
                 "binary64_hex": None if bits is None else binary64_hex(bits), "binary64_status": result.get("binary64_status")}
 
 
+class CanonicalUnitReference:
+    calculation_version = "1.0.2"
+    files = {"cases.json"}
+
+    def __init__(self, bindings, documents):
+        object_fields(bindings, ("version", "content_digest", "execution_projection_sha256",
+                                 "integrity_manifest_sha256"), "canonical unit snapshot bindings")
+        require(valid_text(bindings["version"], 100), "Invalid registry version")
+        for field in ("content_digest", "execution_projection_sha256", "integrity_manifest_sha256"):
+            require(isinstance(bindings[field], str) and SHA256.fullmatch(bindings[field]), f"Invalid {field}")
+
+    def replay(self, inputs):
+        object_fields(inputs, ("mode", "value"), "canonical unit inputs")
+        mode = inputs["mode"]
+        require(isinstance(mode, str) and mode in self.modes, "Unsupported canonical unit mode")
+        raw = inputs["value"]
+        if raw is None or (isinstance(raw, str) and not raw.strip()):
+            return rejected("MISSING_REQUIRED_INPUT", "value")
+        require(type(raw) not in (int, float), "Use decimal text in public canonical unit cases")
+        match = CANONICAL_DECIMAL.fullmatch(raw) if isinstance(raw, str) and len(raw) <= 110 else None
+        if match is None or not math.isfinite(float(match[1])):
+            return rejected("INVALID_NUMBER", "value")
+        exact = self.convert(mode, Fraction(match[1]))
+        if isinstance(exact, dict):
+            return exact
+        bits, status = project(exact)
+        if status != "finite":
+            return rejected("NUMERIC_" + status.upper(), "value")
+        return {"binary64_hex": bits}
+
+    def observe(self, response, inputs):
+        return {"binary64_hex": binary64_hex(response.get("result"))}
+
+
+class CelsiusKelvinReference(CanonicalUnitReference):
+    capability_id = "units.temperature.celsius_kelvin"
+    endpoint = "/api/v1/calc/celsius-kelvin"
+    modes = {"c-k", "k-c"}
+
+    def convert(self, mode, value):
+        kelvin = value + KELVIN_OFFSET if mode == "c-k" else value
+        if kelvin < 0:
+            return rejected("VALUE_OUT_OF_RANGE", "value")
+        return kelvin if mode == "c-k" else kelvin - KELVIN_OFFSET
+
+
+class PsiBarReference(CanonicalUnitReference):
+    capability_id = "units.pressure.psi_bar"
+    endpoint = "/api/v1/calc/psi-bar"
+    modes = {"psi-bar", "bar-psi"}
+
+    def convert(self, mode, value):
+        if value <= 0:
+            return rejected("VALUE_MUST_BE_POSITIVE", "value")
+        return value * BAR_PER_PSI if mode == "psi-bar" else value / BAR_PER_PSI
+
+
 class PercentageReference:
     capability_id = "math.percentage"
     calculation_version = "1.2.0"
@@ -211,4 +274,9 @@ class PercentageReference:
         return {"mode": result.get("mode"), "unit": result["unit"], "binary64_hex": binary64_hex(result.get("value"))}
 
 
-PROFILES = {"uuce-v1": UuceReference, "percentage-v1": PercentageReference}
+PROFILES = {
+    "uuce-v1": UuceReference,
+    "celsius-kelvin-v1": CelsiusKelvinReference,
+    "psi-bar-v1": PsiBarReference,
+    "percentage-v1": PercentageReference,
+}

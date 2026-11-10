@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cvp-replay-cli"
-version = "0.1.0"
+version = "0.1.1"
 description = "Independent verifier for versioned CVP replay evidence"
 requires-python = ">=3.9"
 readme = "README.md"

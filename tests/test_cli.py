@@ -12,6 +12,7 @@ from unittest.mock import patch
 from cvp_cli.__main__ import main
 from cvp_cli.live import ProbeError
 from cvp_cli.pack import PackError, parse_json
+from cvp_cli.reference import CelsiusKelvinReference, PsiBarReference
 
 EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
 UUCE_PIN = "9bbb69129e989fa90326650a8d07526b65e272446c3efb4b98c581b3990ca967"
@@ -57,6 +58,23 @@ class VerifyTest(unittest.TestCase):
                 self.assertEqual(len(result["reference_replay"]["cases"]), count)
                 self.assertEqual(result["live_probe"]["status"], "NOT_RUN")
             live.assert_not_called()
+
+    def test_canonical_unit_profiles(self):
+        bindings = json.loads((EXAMPLES / "uuce" / "manifest.json").read_text())["bindings"]
+        cases = (
+            (CelsiusKelvinReference, "c-k", "-273.15", {"binary64_hex": "0000000000000000"}),
+            (CelsiusKelvinReference, "c-k", "-273.1500000000000000001",
+             {"error": {"code": "VALUE_OUT_OF_RANGE", "field": "value"}}),
+            (PsiBarReference, "psi-bar", "14.503773773020923", {"binary64_hex": "3ff0000000000000"}),
+            (PsiBarReference, "psi-bar", "5e-324",
+             {"error": {"code": "NUMERIC_UNDERFLOW", "field": "value"}}),
+        )
+        for profile, mode, value, expected in cases:
+            with self.subTest(profile=profile, value=value):
+                reference = profile(bindings, {})
+                self.assertEqual(reference.replay({"mode": mode, "value": value}), expected)
+        self.assertEqual(PsiBarReference(bindings, {}).observe({"result": 1}, {}),
+                         {"binary64_hex": "3ff0000000000000"})
 
     def test_altered_manifest_fails_even_when_artifacts_are_valid(self):
         self.repin(lambda manifest: manifest.update(revision="different"))

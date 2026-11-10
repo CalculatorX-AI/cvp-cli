@@ -55,6 +55,13 @@ decimal34 rounded ties-to-even, and binary64 bits or range status. Numerical
 projection uses the frozen UUCE rational π policy. An unlisted unit requires
 a new public reference definition before its cases can be replayed.
 
+**`celsius-kelvin-v1`** and **`psi-bar-v1`** support the corresponding
+version `1.0.2` calculator capabilities. Bindings carry the same snapshot pins
+as `uuce-v1`. Public cases use decimal text, exact SI reference factors, and one
+final binary64 rounding. The verifier compares binary64 bits or a structured
+error. Optional live comparison pins the calculator version and compares the
+listed result or error at its REST endpoint.
+
 **`percentage-v1`** supports `math.percentage@1.2.0`. Bindings are empty.
 The initial profile covers the canonical `of`, `is-what` and `of-what` modes
 with decimal-string inputs. It interprets each accepted input as binary64,

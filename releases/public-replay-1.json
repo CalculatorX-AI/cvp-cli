@@ -1,0 +1,79 @@
+{
+  "format": "calculatorx-cvp-replay-releases-v1",
+  "cli_repository": "https://github.com/CalculatorX-AI/cvp-cli",
+  "packs": [
+    {
+      "capability_id": "units.convert",
+      "calculation_version": "0.1.1",
+      "revision": "public-replay-1",
+      "profile": "uuce-v1",
+      "scope": "Public cases for 10 registered units. Covers exact linear and affine conversions, symbolic pi, decimal34, binary64 boundaries, and listed rejections.",
+      "minimum_cli_version": "0.1.0",
+      "case_count": 18,
+      "base_path": "/developers/cvp/packs/units.convert/0.1.1/public-replay-1",
+      "manifest_sha256": "4a02c7146ad66f8db17c7eb05a238cf485fe105a4f0fc15aa563e823bcbbfefa",
+      "files": [
+        "manifest.json",
+        "cases.json",
+        "reference-units.json"
+      ],
+      "cvp_verification_revision": "2026-11-05.uuce-c6-v1",
+      "cvp_core_sha256": "151ae77934023fa10e8c6e4fdb34352a6aee9e973a9b345e304f5c34791518e8",
+      "cvp_manifest": "https://www.calculatorx.com/evidence/units.convert/0.1.1/2026-11-05.uuce-c6-v1.151ae7793402.cvp.json"
+    },
+    {
+      "capability_id": "units.temperature.celsius_kelvin",
+      "calculation_version": "1.0.2",
+      "revision": "public-replay-1",
+      "profile": "celsius-kelvin-v1",
+      "scope": "Public decimal-text cases for both temperature point directions, absolute zero, and listed input rejections.",
+      "minimum_cli_version": "0.1.1",
+      "case_count": 8,
+      "base_path": "/developers/cvp/packs/units.temperature.celsius_kelvin/1.0.2/public-replay-1",
+      "manifest_sha256": "edfbddfb0893eca47a89b43d65b029dd84c9b1eaf50df74b365c12dc21dbc04a",
+      "files": [
+        "manifest.json",
+        "cases.json"
+      ],
+      "cvp_verification_revision": "2026-11-09.uuce-canonical-units-v1",
+      "cvp_core_sha256": "45226e9604a7916b8dc056bc113d9a6cad95de0baed79c807696846df6e2fcd9",
+      "cvp_manifest": "https://www.calculatorx.com/evidence/units.temperature.celsius_kelvin/1.0.2/2026-11-09.uuce-canonical-units-v1.45226e9604a7.cvp.json"
+    },
+    {
+      "capability_id": "units.pressure.psi_bar",
+      "calculation_version": "1.0.2",
+      "revision": "public-replay-1",
+      "profile": "psi-bar-v1",
+      "scope": "Public decimal-text cases for both positive pressure directions, including binary64 range boundaries and listed rejections.",
+      "minimum_cli_version": "0.1.1",
+      "case_count": 8,
+      "base_path": "/developers/cvp/packs/units.pressure.psi_bar/1.0.2/public-replay-1",
+      "manifest_sha256": "2b51b19389d9b3a484f129c14168c14205a3ea1f8f2f6aa7afd76d30e2d02afc",
+      "files": [
+        "manifest.json",
+        "cases.json"
+      ],
+      "cvp_verification_revision": "2026-11-09.uuce-canonical-units-v1",
+      "cvp_core_sha256": "536fe15c1cd8d885c7d273ac6471ba4b68466b89984c087ce1d418b2e3100d5b",
+      "cvp_manifest": "https://www.calculatorx.com/evidence/units.pressure.psi_bar/1.0.2/2026-11-09.uuce-canonical-units-v1.536fe15c1cd8.cvp.json"
+    },
+    {
+      "capability_id": "math.percentage",
+      "calculation_version": "1.2.0",
+      "revision": "public-replay-1",
+      "profile": "percentage-v1",
+      "scope": "Public cases for percentage of a whole, part as a percentage, and recovering the whole. Covers listed decimal inputs and zero-divisor rejections.",
+      "minimum_cli_version": "0.1.0",
+      "case_count": 10,
+      "base_path": "/developers/cvp/packs/math.percentage/1.2.0/public-replay-1",
+      "manifest_sha256": "826fbc505e4546df7fb2df3a90c0700dff2f73b5942b5c4e9baeb9233309dc51",
+      "files": [
+        "manifest.json",
+        "cases.json"
+      ],
+      "cvp_verification_revision": "2026-10-29.math-uuce-fields-v1",
+      "cvp_core_sha256": "3c8e981c1c1f04f97ffac3c1bf12514046010ae953da7d480374e7a6c5a8fa6e",
+      "cvp_manifest": "https://www.calculatorx.com/evidence/math.percentage/1.2.0/2026-10-29.math-uuce-fields-v1.3c8e981c1c1f.cvp.json"
+    }
+  ]
+}
