@@ -6,12 +6,14 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 
 from cvp_cli.__main__ import main
 from cvp_cli.live import ProbeError
 from cvp_cli.pack import PackError, parse_json
+from cvp_cli.preflight import ORIGIN, PREFLIGHT_CONTRACT, RECEIPT_CONTRACT, pinned_binding
 from cvp_cli.reference import CelsiusKelvinReference, PsiBarReference
 
 EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
@@ -48,6 +50,74 @@ class VerifyTest(unittest.TestCase):
 
     def verify(self, pin=UUCE_PIN, *options):
         return invoke("verify", self.root, "--manifest-sha256", pin, *options)
+
+    def production_fixture(self):
+        manifest = json.loads((self.root / "manifest.json").read_bytes())
+        cases = json.loads((self.root / "cases.json").read_bytes())["cases"]
+        case = cases[0]
+        release = Path(self.temp.name) / "trusted-release.json"
+        release.write_text(json.dumps({
+            "format": "calculatorx-cvp-replay-releases-v1",
+            "packs": [{
+                **{key: manifest[key] for key in ("capability_id", "calculation_version", "revision", "profile")},
+                "manifest_sha256": UUCE_PIN, "cvp_verification_revision": "review-1", "cvp_core_sha256": "a" * 64,
+            }],
+        }), encoding="utf-8")
+        binding = pinned_binding(release, manifest, UUCE_PIN)
+        now = datetime.now(timezone.utc).replace(microsecond=0)
+        stamp = lambda time: time.isoformat(timespec="milliseconds").replace("+00:00", "Z")
+        receipt = {
+            "contract": RECEIPT_CONTRACT, "issuer": ORIGIN, "capability_id": "units.convert",
+            "calculation_version": "0.1.1", "production_freshness": "CURRENT", "binding": binding,
+            "attestation_id": "b" * 64, "checked_at": stamp(now - timedelta(hours=1)),
+            "expires_at": stamp(now + timedelta(days=7, hours=-1)),
+        }
+        reply = {
+            "contract": PREFLIGHT_CONTRACT, "policy_version": "1.0.0", "decision": "ALLOW", "code": "IN_POLICY",
+            "receipt": receipt, "execute": {"method": "POST", "path": "/api/v1/units/convert",
+                                            "body": {"calculation_version": "0.1.1", "inputs": case["inputs"]}},
+        }
+        options = ("--live", ORIGIN, "--live-case", case["id"], "--release-record", release,
+                   "--use-case", "standalone_low_risk")
+        return options, case, receipt, reply
+
+    def test_production_preflight_reports_allow_before_execution(self):
+        options, case, receipt, reply = self.production_fixture()
+        with patch("cvp_cli.preflight.request_json", side_effect=[(200, receipt), (200, reply)]) as request, \
+                patch("cvp_cli.__main__.observe", return_value=case["expected"]) as live:
+            code, report = self.verify(UUCE_PIN, *options)
+        self.assertEqual(code, 0, report)
+        self.assertEqual(report["live_probe"]["cases"][0]["production_preflight"]["decision"], "ALLOW")
+        self.assertEqual(request.call_args.kwargs["body"]["trust"], receipt["binding"])
+        self.assertEqual(live.call_args.kwargs["binding"], receipt["binding"])
+
+    def test_production_preflight_fails_closed(self):
+        options, _, receipt, reply = self.production_fixture()
+        for changed_receipt, changed_reply, decision in (
+            ({**receipt, "binding": {**receipt["binding"], "cvp_core_sha256": "c" * 64}}, reply, "UNAVAILABLE"),
+            ({**receipt, "checked_at": "2000-01-01T00:00:00.000Z",
+              "expires_at": "2000-01-08T00:00:00.000Z"}, reply, "UNAVAILABLE"),
+            (receipt, {**reply, "decision": "DENY", "code": "CONVERSION_OUTSIDE_POLICY"}, "DENY"),
+            (receipt, {**reply, "decision": "NEED_CONTEXT", "code": "CONTEXT_REQUIRED"}, "NEED_CONTEXT"),
+            (receipt, {**reply, "execute": {**reply["execute"], "path": "/other"}}, "UNAVAILABLE"),
+        ):
+            with self.subTest(decision=decision), patch("cvp_cli.preflight.request_json", side_effect=[
+                (200, changed_receipt), (200, changed_reply),
+            ]), patch("cvp_cli.__main__.observe") as live:
+                code, report = self.verify(UUCE_PIN, *options)
+                self.assertEqual(code, 2, report)
+                self.assertEqual(report["live_probe"]["cases"][0]["production_preflight"]["decision"], decision)
+                live.assert_not_called()
+
+    def test_approved_execution_still_requires_response_binding(self):
+        options, _, receipt, reply = self.production_fixture()
+        with patch("cvp_cli.preflight.request_json", side_effect=[(200, receipt), (200, reply)]), \
+                patch("cvp_cli.live.request_json", return_value=(200, {
+                    "status": "success", "capability_id": "units.convert", "calculation_version": "0.1.1",
+                })):
+            code, report = self.verify(UUCE_PIN, *options)
+        self.assertEqual(code, 2, report)
+        self.assertIn("CVP binding differs", report["live_probe"]["cases"][0]["detail"])
 
     def test_examples_replay_offline(self):
         with patch("cvp_cli.__main__.observe") as live:
