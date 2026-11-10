@@ -73,9 +73,10 @@ without network access.
 1. Author inputs, expected results, derivations and references under
    [the pack protocol](PROTOCOL.md). Use independent references and fixtures
    that are cleared for public redistribution.
-2. Pin every data file in the manifest. Tag the CLI and publish the versioned
-   pack with its exact manifest SHA-256 in a trusted release record. Preserve
-   the original file bytes for historical replay.
+2. Pin every data file in the manifest and deploy the versioned pack to
+   CalculatorX. Then add its exact manifest SHA-256 to the release records in
+   this repository so CI can verify the download. Preserve the original file
+   bytes for historical replay. Tag the tested CLI when issuing a CLI version.
 3. For detached signatures, sign the exact manifest bytes with an existing
    publisher RSA key kept outside the repository. Publish the signature with
    the pack and distribute the public key through a trusted channel.
@@ -96,7 +97,15 @@ new public fixtures and cited reference definitions.
 
 ```sh
 python3 -m unittest discover -s tests -v
+python3 -B -m scripts.verify_releases
 ```
+
+The release replay checks every pack listed in this checkout's release records.
+It downloads the versioned JSON from CalculatorX and authenticates the manifest
+against the digest in the release record before replaying its cases. Use
+`--public-dir /path/to/public` to run the same check on a local publication tree.
+Release tags use `v<version>` and CI checks the tag against the installed
+`cvp --version`.
 
 See [PROTOCOL.md](PROTOCOL.md) for the evidence contract and profile extension
 rules. The verifier code and original example data use the [MIT license](LICENSE).
