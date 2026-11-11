@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { convertUnits, UuceError } from './uuce.ts';
+import { convertUnits, UuceError, type UuceExpandedPolicy } from './uuce.ts';
 
 const { binding } = JSON.parse(readFileSync(new URL('../../releases/uuce-agent-policy-1.0.0.json', import.meta.url), 'utf8'));
 const inputs = {
@@ -82,4 +82,26 @@ test('requires explicit context and checks the returned binding', async t => {
   assert.equal(fetch.mock.callCount(), 0);
   await assert.rejects(convertUnits(inputs, options), /differs from the approved version/);
   assert.equal(fetch.mock.callCount(), 3);
+});
+
+test('opts into a pinned expanded policy for mass and rejects a changed digest', async t => {
+  const policy: UuceExpandedPolicy = JSON.parse(readFileSync(new URL('../../releases/uuce-agent-policy-1.1.0.json', import.meta.url), 'utf8'));
+  const mass = { ...inputs, quantity_kind: 'mass', from_unit_id: 'cx:kg', to_unit_id: 'cx:g' };
+  const body = { calculation_version: '0.1.1', inputs: mass };
+  const expanded = { ...approval, policy_version: '1.1.0', policy_sha256: policy.policy_sha256,
+    execute: { ...approval.execute, body } };
+  const massOutput = { ...output, result: { ...output.result, exact: { numerator: '2000', denominator: '1', pi_power: 0 },
+    decimal: '2e3', binary64: 2000, input: { ...output.result.input, quantity_kind: 'mass' },
+    from: { unit_id: 'cx:kg' }, to: { unit_id: 'cx:g' } } };
+  const replies = [receipt, expanded, massOutput, receipt, { ...expanded, policy_sha256: '0'.repeat(64) }];
+  const fetch = t.mock.method(globalThis, 'fetch', async (url, request) => {
+    if (new URL(url).pathname.endsWith('/preflight')) assert.equal(JSON.parse(request.body).policy_sha256, policy.policy_sha256);
+    return Response.json(replies.shift());
+  });
+  const result = await convertUnits(mass, { ...options, policy });
+  assert.equal(result.result.decimal, '2e3');
+  assert.equal(result.production_preflight.policy_version, '1.1.0');
+  await assert.rejects(convertUnits(mass, { ...options, policy }), /policy pins differ/);
+  await assert.rejects(convertUnits(mass, { ...options, policy: { ...policy, groups: { mass: ['cx:kg', 'cx:g'] } } }), /scope does not match/);
+  assert.equal(fetch.mock.callCount(), 5);
 });

@@ -1,0 +1,25 @@
+{
+  "format": "calculatorx-cvp-replay-releases-v1",
+  "cli_repository": "https://github.com/CalculatorX-AI/cvp-cli",
+  "packs": [
+    {
+      "capability_id": "units.convert",
+      "calculation_version": "0.1.1",
+      "revision": "public-replay-37",
+      "profile": "uuce-v1",
+      "scope": "Agent scope evidence for ordinary volume scalar conversions, part 14. Covers selected directed pairs and structured conversion refusals.",
+      "minimum_cli_version": "0.1.0",
+      "case_count": 28,
+      "base_path": "/developers/cvp/packs/units.convert/0.1.1/public-replay-37",
+      "manifest_sha256": "228a5c0991ea7fc1507f2def665b5f6865b989fd55dcaf56bc724702bacb8a44",
+      "files": [
+        "manifest.json",
+        "cases.json",
+        "reference-units.json"
+      ],
+      "cvp_verification_revision": "2026-11-05.uuce-c6-v1",
+      "cvp_core_sha256": "151ae77934023fa10e8c6e4fdb34352a6aee9e973a9b345e304f5c34791518e8",
+      "cvp_manifest": "https://www.calculatorx.com/evidence/units.convert/0.1.1/2026-11-05.uuce-c6-v1.151ae7793402.cvp.json"
+    }
+  ]
+}

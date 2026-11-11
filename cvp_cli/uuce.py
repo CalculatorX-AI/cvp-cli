@@ -30,7 +30,7 @@ def binding_from_release(pack, release_record, *, manifest_sha256):
     return pinned_binding(Path(release_record), manifest, digest)
 
 
-def convert_units(inputs: dict[str, str], *, binding: dict[str, str], use_case: str) -> dict:
+def convert_units(inputs: dict[str, str], *, binding: dict[str, str], use_case: str, policy=None) -> dict:
     """Run an explicitly low-risk conversion only after production approval."""
     if use_case != USE_CASE:
         raise UuceError("Confirm standalone_low_risk before requesting a conversion",
@@ -43,7 +43,7 @@ def convert_units(inputs: dict[str, str], *, binding: dict[str, str], use_case: 
         raise UuceError("Supply explicit unit IDs, decimal text, quantity kind, role and snapshot", code="INVALID_INPUT")
     gate = {}
     try:
-        approve(CALCULATION_VERSION, binding, inputs, gate)
+        approve(CALCULATION_VERSION, binding, inputs, gate, policy=policy)
         _, response = request_json(
             ORIGIN + CONVERSION_PATH, body={"calculation_version": CALCULATION_VERSION, "inputs": inputs},
             version=CALCULATION_VERSION,

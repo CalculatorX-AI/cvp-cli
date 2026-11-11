@@ -1,9 +1,10 @@
-/** Application client for CalculatorX UUCE preflight policy 1.0.0. */
+/** Application client for versioned CalculatorX UUCE preflight policies. */
 
 const origin = 'https://www.calculatorx.com';
 const capability = 'units.convert';
 const calculationVersion = '0.1.1';
-const policyVersion = '1.0.0';
+const legacyPolicyVersion = '1.0.0';
+const expandedPolicyVersion = '1.1.0';
 const conversionPath = '/api/v1/units/convert';
 const maxResponseBytes = 256 * 1024;
 const sha256 = /^[a-f0-9]{64}(?![\s\S])/;
@@ -27,6 +28,16 @@ export interface UuceBinding {
   execution_projection_sha256: string;
   integrity_manifest_sha256: string;
   numerical_policy: string;
+}
+
+export interface UuceExpandedPolicy {
+  format: 'calculatorx-uuce-agent-client-pins-v1';
+  capability_id: 'units.convert';
+  calculation_version: '0.1.1';
+  policy_version: '1.1.0';
+  policy_sha256: string;
+  binding: UuceBinding;
+  groups: Record<string, string[]>;
 }
 
 type JsonObject = Record<string, unknown>;
@@ -124,11 +135,39 @@ function verifyReceipt(receipt: JsonObject, binding: UuceBinding) {
   }
 }
 
-function inPolicy(inputs: UuceInputs, binding: UuceBinding) {
-  const pair = `${inputs.from_unit_id}|${inputs.to_unit_id}`;
+async function checkPolicy(policy: UuceExpandedPolicy | undefined, binding: UuceBinding) {
+  if (policy === undefined) {
+    return { pins: { policy_version: legacyPolicyVersion }, groups: new Map([['length', ['cx:m', 'cx:ft_i']]]) };
+  }
+  if (!record(policy) || policy.format !== 'calculatorx-uuce-agent-client-pins-v1' ||
+      policy.capability_id !== capability || policy.calculation_version !== calculationVersion ||
+      policy.policy_version !== expandedPolicyVersion || !equal(policy.binding, binding) ||
+      typeof policy.policy_sha256 !== 'string' || !sha256.test(policy.policy_sha256) || !record(policy.groups)) {
+    throw new UuceError('The trusted policy record differs from the calculation or receipt pins');
+  }
+  const digest = policy.policy_sha256;
+  const entries: [string, string[]][] = [];
+  for (const [kind, units] of Object.entries(policy.groups)) {
+    if (!/^[a-z0-9][a-z0-9._-]{0,127}(?![\s\S])/.test(kind) || !Array.isArray(units) || units.length < 2 ||
+        ![...units].every(id => typeof id === 'string' && /^cx:[A-Za-z0-9_.-]{1,124}(?![\s\S])/.test(id)) ||
+        new Set(units).size !== units.length) {
+      throw new UuceError('Invalid trusted policy unit group');
+    }
+    entries.push([kind, [...units]]);
+  }
+  entries.sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0);
+  const bytes = new TextEncoder().encode(JSON.stringify(entries));
+  const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+  const hex = Array.from(hash, byte => byte.toString(16).padStart(2, '0')).join('');
+  if (!entries.length || hex !== digest) throw new UuceError('Trusted policy scope does not match its digest');
+  return { pins: { policy_version: expandedPolicyVersion, policy_sha256: digest }, groups: new Map(entries) };
+}
+
+function inPolicy(inputs: UuceInputs, binding: UuceBinding, groups: Map<string, string[]>) {
+  const { from_unit_id: from, to_unit_id: to, quantity_kind: kind } = inputs;
+  const units = groups.get(kind);
   const [whole, fraction = ''] = inputs.value.split('.');
-  return (pair === 'cx:m|cx:ft_i' || pair === 'cx:ft_i|cx:m') &&
-    inputs.quantity_kind === 'length' && inputs.role === 'scalar' &&
+  return from !== to && units?.includes(from) && units.includes(to) && inputs.role === 'scalar' &&
     inputs.snapshot === binding.registry_version && decimal.test(inputs.value) &&
     Number(whole) <= 1000000 && (whole !== '1000000' || !/[1-9]/.test(fraction));
 }
@@ -162,7 +201,9 @@ function resultFor(response: JsonObject, binding: UuceBinding, inputs: UuceInput
   return result as UuceResult;
 }
 
-export async function convertUnits(source: UuceInputs, options: { binding: UuceBinding; useCase: 'standalone_low_risk' }) {
+export async function convertUnits(source: UuceInputs, options: {
+  binding: UuceBinding; useCase: 'standalone_low_risk'; policy?: UuceExpandedPolicy;
+}) {
   const useCase = options?.useCase;
   if (useCase !== 'standalone_low_risk') {
     throw new UuceError('Confirm standalone_low_risk before requesting a conversion', {
@@ -183,22 +224,24 @@ export async function convertUnits(source: UuceInputs, options: { binding: UuceB
       !inputFields.every(key => typeof inputs[key] === 'string' && inputs[key])) {
     throw new UuceError('Supply explicit unit IDs, decimal text, quantity kind, role and snapshot', { code: 'INVALID_INPUT' });
   }
+  const { pins: policyPins, groups } = await checkPolicy(options.policy, binding);
   const query = new URLSearchParams({ capability_id: capability, calculation_version: calculationVersion });
   const receipt = await requestJson('/api/v1/cvp/receipt?' + query);
   verifyReceipt(receipt, binding);
   const envelope = { calculation_version: calculationVersion, inputs };
   const approval = await requestJson('/api/v1/units/preflight', {
-    ...envelope, policy_version: policyVersion, trust: binding, context: { use_case: useCase },
+    ...envelope, ...policyPins, trust: binding, context: { use_case: useCase },
   });
-  if (approval.contract !== 'calculatorx-uuce-agent-preflight-v1' || approval.policy_version !== policyVersion) {
-    throw new UuceError('Unknown production preflight contract or policy version');
+  if (approval.contract !== 'calculatorx-uuce-agent-preflight-v1' ||
+      Object.entries(policyPins).some(([key, pin]) => approval[key] !== pin)) {
+    throw new UuceError('Production preflight contract or policy pins differ');
   }
   if (approval.decision === 'DENY' || approval.decision === 'NEED_CONTEXT') {
     throw new UuceError(`Production preflight returned ${approval.decision}`, {
       decision: approval.decision, code: typeof approval.code === 'string' ? approval.code : undefined,
     });
   }
-  if (approval.decision !== 'ALLOW' || approval.code !== 'IN_POLICY' || !inPolicy(inputs, binding) ||
+  if (approval.decision !== 'ALLOW' || approval.code !== 'IN_POLICY' || !inPolicy(inputs, binding, groups) ||
       !equal(approval.receipt, receipt) ||
       !equal(approval.execute, { method: 'POST', path: conversionPath, body: envelope })) {
     throw new UuceError('Production approval differs from the pinned policy, receipt or request');
@@ -208,7 +251,7 @@ export async function convertUnits(source: UuceInputs, options: { binding: UuceB
   return {
     result,
     production_preflight: {
-      decision: 'ALLOW' as const, code: 'IN_POLICY', policy_version: policyVersion,
+      decision: 'ALLOW' as const, code: 'IN_POLICY', ...policyPins,
       attestation_id: receipt.attestation_id as string, expires_at: receipt.expires_at as string,
     },
   };

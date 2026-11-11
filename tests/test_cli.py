@@ -144,6 +144,41 @@ class VerifyTest(unittest.TestCase):
             execute.assert_not_called()
         self.assertEqual((error.exception.decision, error.exception.code), ("DENY", "CONVERSION_OUTSIDE_POLICY"))
 
+    def test_expanded_policy_pins_gate_both_cli_and_sdk(self):
+        options, case, receipt, reply = self.production_fixture()
+        policy = json.loads((EXAMPLES.parent / "releases/uuce-agent-policy-1.1.0.json").read_bytes())
+        policy["binding"] = receipt["binding"]
+        digest = policy["policy_sha256"]
+        expanded_reply = {**reply, "policy_version": "1.1.0", "policy_sha256": digest}
+        policy_file = Path(options[options.index("--release-record") + 1]).with_name("policy.json")
+        policy_file.write_text(json.dumps(policy), encoding="utf-8")
+        with patch("cvp_cli.preflight.request_json", side_effect=[(200, receipt), (200, expanded_reply)]) as request, \
+                patch("cvp_cli.__main__.observe", return_value=case["expected"]):
+            code, report = self.verify(UUCE_PIN, *options, "--agent-policy", policy_file)
+        self.assertEqual(code, 0, report)
+        self.assertEqual(request.call_args.kwargs["body"]["policy_sha256"], digest)
+        self.assertEqual(report["live_probe"]["cases"][0]["production_preflight"]["policy_sha256"], digest)
+        mass = {**case["inputs"], "from_unit_id": "cx:kg", "to_unit_id": "cx:g", "quantity_kind": "mass"}
+        approved_mass = {**expanded_reply, "execute": {
+            **expanded_reply["execute"], "body": {"calculation_version": "0.1.1", "inputs": mass},
+        }}
+        sdk = {"binding": receipt["binding"], "use_case": "standalone_low_risk", "policy": policy}
+        with patch("cvp_cli.preflight.request_json", side_effect=[(200, receipt), (200, approved_mass)]), \
+                patch("cvp_cli.uuce.request_json", return_value=(200, {})) as execute, \
+                patch("cvp_cli.uuce.check_uuce_result", return_value={"decimal": "2e3"}):
+            converted = convert_units(mass, **sdk)
+        execute.assert_called_once()
+        self.assertEqual(converted["production_preflight"]["policy_version"], "1.1.0")
+        for bad_policy, bad_reply, message in (
+            ({**policy, "groups": {"mass": ["cx:kg", "cx:g"]}}, approved_mass, "scope does not match"),
+            (policy, {**approved_mass, "policy_sha256": "0" * 64}, "policy pins differ"),
+        ):
+            with patch("cvp_cli.preflight.request_json", side_effect=[(200, receipt), (200, bad_reply)]), \
+                    patch("cvp_cli.uuce.request_json") as execute:
+                with self.assertRaisesRegex(UuceError, message):
+                    convert_units(mass, **{**sdk, "policy": bad_policy})
+                execute.assert_not_called()
+
     def test_examples_replay_offline(self):
         with patch("cvp_cli.__main__.observe") as live:
             for name, pin, count in (("uuce", UUCE_PIN, 14), ("percentage", PERCENTAGE_PIN, 8)):

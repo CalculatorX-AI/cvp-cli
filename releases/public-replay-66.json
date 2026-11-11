@@ -1,0 +1,25 @@
+{
+  "format": "calculatorx-cvp-replay-releases-v1",
+  "cli_repository": "https://github.com/CalculatorX-AI/cvp-cli",
+  "packs": [
+    {
+      "capability_id": "units.convert",
+      "calculation_version": "0.1.1",
+      "revision": "public-replay-66",
+      "profile": "uuce-v1",
+      "scope": "Agent scope evidence for ordinary energy scalar conversions, part 5. Covers selected directed pairs and structured conversion refusals.",
+      "minimum_cli_version": "0.1.0",
+      "case_count": 40,
+      "base_path": "/developers/cvp/packs/units.convert/0.1.1/public-replay-66",
+      "manifest_sha256": "d6b620faf9707b101193bc8b6cf5684fd99a1bf4d73fa4bac4625146defc9be9",
+      "files": [
+        "manifest.json",
+        "cases.json",
+        "reference-units.json"
+      ],
+      "cvp_verification_revision": "2026-11-05.uuce-c6-v1",
+      "cvp_core_sha256": "151ae77934023fa10e8c6e4fdb34352a6aee9e973a9b345e304f5c34791518e8",
+      "cvp_manifest": "https://www.calculatorx.com/evidence/units.convert/0.1.1/2026-11-05.uuce-c6-v1.151ae7793402.cvp.json"
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 """Authenticate the production receipt and gate an explicit UUCE live probe."""
 
+import hashlib
+import json
 import re
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
@@ -7,11 +9,12 @@ from urllib.parse import urlencode
 
 from .live import ProbeError, request_json
 from .pack import IDENTIFIER, MAX_MANIFEST_BYTES, SHA256, _read_file, parse_json, require
-from .reference import UUCE_POLICY
+from .reference import UNIT_ID, UUCE_POLICY
 
 ORIGIN = "https://www.calculatorx.com"
 USE_CASE = "standalone_low_risk"
 POLICY_VERSION = "1.0.0"
+EXPANDED_POLICY_VERSION = "1.1.0"
 RECEIPT_CONTRACT = "calculatorx-cvp-production-receipt-v1"
 PREFLIGHT_CONTRACT = "calculatorx-uuce-agent-preflight-v1"
 INSTANT = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z")
@@ -66,36 +69,62 @@ def _receipt_expiry(receipt, version, binding):
     return expires
 
 
-def _in_policy(inputs, binding):
+def _policy_pins(policy, version, binding):
+    if policy is None:
+        return {"policy_version": POLICY_VERSION}, {"length": ("cx:m", "cx:ft_i")}
+    if (not isinstance(policy, dict) or policy.get("format") != "calculatorx-uuce-agent-client-pins-v1"
+            or policy.get("capability_id") != "units.convert" or policy.get("calculation_version") != version
+            or policy.get("policy_version") != EXPANDED_POLICY_VERSION or policy.get("binding") != binding):
+        raise ProbeError("The trusted policy record differs from the calculation or receipt pins")
+    digest, groups = policy.get("policy_sha256"), policy.get("groups")
+    if not isinstance(digest, str) or not SHA256.fullmatch(digest) or not isinstance(groups, dict) or not groups:
+        raise ProbeError("Invalid trusted policy scope")
+    normalized = {}
+    for kind, units in groups.items():
+        if (not isinstance(kind, str) or not IDENTIFIER.fullmatch(kind)
+                or not isinstance(units, list) or len(units) < 2
+                or any(not isinstance(unit, str) or not UNIT_ID.fullmatch(unit) for unit in units)
+                or len(set(units)) != len(units)):
+            raise ProbeError("Invalid trusted policy unit group")
+        normalized[kind] = tuple(units)
+    payload = json.dumps(sorted(normalized.items()), separators=(",", ":")).encode("ascii")
+    if hashlib.sha256(payload).hexdigest() != digest:
+        raise ProbeError("Trusted policy scope does not match its digest")
+    return {"policy_version": EXPANDED_POLICY_VERSION, "policy_sha256": digest}, normalized
+
+
+def _in_policy(inputs, binding, groups):
     value = inputs.get("value")
+    source, target = inputs.get("from_unit_id"), inputs.get("to_unit_id")
+    units = groups.get(inputs.get("quantity_kind"), ())
     return (
-        inputs.get("quantity_kind") == "length" and inputs.get("role") == "scalar"
-        and (inputs.get("from_unit_id"), inputs.get("to_unit_id")) in (("cx:m", "cx:ft_i"), ("cx:ft_i", "cx:m"))
+        inputs.get("role") == "scalar" and source != target and source in units and target in units
         and inputs.get("snapshot") == binding["registry_version"]
         and isinstance(value, str) and VALUE.fullmatch(value) and Decimal(value) <= 1000000
     )
 
 
-def approve(version, binding, inputs, report):
+def approve(version, binding, inputs, report, *, policy=None):
+    policy_pins, groups = _policy_pins(policy, version, binding)
     query = urlencode({"capability_id": "units.convert", "calculation_version": version})
     _, receipt = request_json(ORIGIN + "/api/v1/cvp/receipt?" + query)
     _receipt_expiry(receipt, version, binding)
     envelope = {"calculation_version": version, "inputs": inputs}
     _, reply = request_json(ORIGIN + "/api/v1/units/preflight", body={
-        **envelope, "policy_version": POLICY_VERSION, "trust": binding, "context": {"use_case": USE_CASE},
+        **envelope, **policy_pins, "trust": binding, "context": {"use_case": USE_CASE},
     })
-    if reply.get("contract") != PREFLIGHT_CONTRACT or reply.get("policy_version") != POLICY_VERSION:
-        raise ProbeError("Unknown production preflight contract or policy version")
+    if reply.get("contract") != PREFLIGHT_CONTRACT or any(reply.get(key) != pin for key, pin in policy_pins.items()):
+        raise ProbeError("Production preflight contract or policy pins differ")
     decision, code = reply.get("decision"), reply.get("code")
     if not isinstance(code, str) or not IDENTIFIER.fullmatch(code.lower()):
         raise ProbeError("Invalid production preflight code")
     if decision in ("DENY", "NEED_CONTEXT"):
         report.update(decision=decision, code=code)
         raise ProbeError(f"Production preflight returned {decision} ({code})")
-    if (decision != "ALLOW" or code != "IN_POLICY" or not _in_policy(inputs, binding)
+    if (decision != "ALLOW" or code != "IN_POLICY" or not _in_policy(inputs, binding, groups)
             or reply.get("receipt") != receipt
             or reply.get("execute") != {"method": "POST", "path": "/api/v1/units/convert", "body": envelope}):
         raise ProbeError("Production preflight approval does not match the pinned policy, receipt, or request")
     _receipt_expiry(receipt, version, binding)
-    report.update(decision="ALLOW", code=code, policy_version=POLICY_VERSION,
+    report.update(decision="ALLOW", code=code, **policy_pins,
                   attestation_id=receipt["attestation_id"], expires_at=receipt["expires_at"])
