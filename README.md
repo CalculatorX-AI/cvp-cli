@@ -92,6 +92,43 @@ without sending the conversion request for that case. Plain `--live`
 continues to provide result comparison. Preflight appears as
 `production_preflight` on each selected case in the JSON report.
 
+## Use UUCE from an application
+
+The Python module and TypeScript source run the receipt and preflight checks
+before sending a conversion. Pass a binding from a separately trusted release
+record and explicitly confirm low-risk use for the current task.
+The [policy 1.0.0 release record](releases/uuce-agent-policy-1.0.0.json)
+contains the pins for the current metre and international foot scope.
+
+```python
+import json
+from pathlib import Path
+from cvp_cli.uuce import convert_units
+
+binding = json.loads(Path("releases/uuce-agent-policy-1.0.0.json").read_bytes())["binding"]
+inputs = {
+    "value": "2", "from_unit_id": "cx:ft_i", "to_unit_id": "cx:m",
+    "quantity_kind": "length", "role": "scalar", "snapshot": binding["registry_version"],
+}
+response = convert_units(inputs, binding=binding, use_case="standalone_low_risk")
+print(response["result"]["exact"])
+```
+
+For TypeScript, import the [source module](sdk/typescript/uuce.ts) into an app
+that supports Fetch. Use the same release binding and input fields.
+
+```typescript
+import { convertUnits } from "./sdk/typescript/uuce.ts";
+
+const response = await convertUnits(inputs, { binding, useCase: "standalone_low_risk" });
+console.log(response.result.exact);
+```
+
+Both clients return the checked result and its preflight record. They throw
+`UuceError` for a rejection or a verification failure. HTTP 429 exposes the
+server's `Retry-After` value on the error as `retry_after` in Python and
+`retryAfter` in TypeScript.
+
 ## Publish a pack
 
 1. Author inputs, expected results, derivations and references under

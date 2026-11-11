@@ -1,0 +1,16 @@
+{
+  "format": "calculatorx-uuce-agent-client-pins-v1",
+  "capability_id": "units.convert",
+  "calculation_version": "0.1.1",
+  "policy_version": "1.0.0",
+  "binding": {
+    "profile": "engineering",
+    "verification_revision": "2026-11-05.uuce-c6-v1",
+    "cvp_core_sha256": "151ae77934023fa10e8c6e4fdb34352a6aee9e973a9b345e304f5c34791518e8",
+    "registry_version": "0.3.0-preview.3",
+    "definition_sha256": "75c66c1e40753435643e728731261a8b7e4c760649cb662c5883249d1f2ecacb",
+    "execution_projection_sha256": "b22cd71baa090908c21a75a86b52d87cab1be0bd2f965156e40c166f2442fbc4",
+    "integrity_manifest_sha256": "ec4360ac1db7cfa18550d955fe4afca333295b74b2348bfd6a40cf8419d0aef0",
+    "numerical_policy": "uuce-rational-pi-decimal34-v1"
+  }
+}

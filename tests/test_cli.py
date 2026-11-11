@@ -15,6 +15,7 @@ from cvp_cli.live import ProbeError
 from cvp_cli.pack import PackError, parse_json
 from cvp_cli.preflight import ORIGIN, PREFLIGHT_CONTRACT, RECEIPT_CONTRACT, pinned_binding
 from cvp_cli.reference import CelsiusKelvinReference, PsiBarReference
+from cvp_cli.uuce import UuceError, convert_units
 
 EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
 UUCE_PIN = "9bbb69129e989fa90326650a8d07526b65e272446c3efb4b98c581b3990ca967"
@@ -118,6 +119,30 @@ class VerifyTest(unittest.TestCase):
             code, report = self.verify(UUCE_PIN, *options)
         self.assertEqual(code, 2, report)
         self.assertIn("CVP binding differs", report["live_probe"]["cases"][0]["detail"])
+
+    def test_sdk_requires_context_and_preserves_rate_limit_details(self):
+        _, case, receipt, reply = self.production_fixture()
+        pins = receipt["binding"]
+        with patch("cvp_cli.uuce.approve") as approve:
+            with self.assertRaises(UuceError) as error:
+                convert_units(case["inputs"], binding=pins, use_case="")
+            self.assertEqual(error.exception.decision, "NEED_CONTEXT")
+            approve.assert_not_called()
+        with patch("cvp_cli.preflight.request_json", side_effect=[(200, receipt), (200, reply)]), \
+                patch("cvp_cli.uuce.request_json", side_effect=ProbeError("rate limited", status=429, retry_after="7")):
+            with self.assertRaises(UuceError) as error:
+                convert_units(case["inputs"], binding=pins, use_case="standalone_low_risk")
+        self.assertEqual((error.exception.code, error.exception.retry_after), ("RATE_LIMITED", "7"))
+
+    def test_sdk_propagates_denial_without_converting(self):
+        _, case, receipt, reply = self.production_fixture()
+        denied = {**reply, "decision": "DENY", "code": "CONVERSION_OUTSIDE_POLICY"}
+        with patch("cvp_cli.preflight.request_json", side_effect=[(200, receipt), (200, denied)]), \
+                patch("cvp_cli.uuce.request_json") as execute:
+            with self.assertRaises(UuceError) as error:
+                convert_units(case["inputs"], binding=receipt["binding"], use_case="standalone_low_risk")
+            execute.assert_not_called()
+        self.assertEqual((error.exception.decision, error.exception.code), ("DENY", "CONVERSION_OUTSIDE_POLICY"))
 
     def test_examples_replay_offline(self):
         with patch("cvp_cli.__main__.observe") as live:
