@@ -87,10 +87,53 @@ cvp verify ./public-replay-1 \
 ```
 
 Policy `1.0.0` covers scalar conversions between metres and international
-feet. A blocked case reports its preflight decision and exits with code 2
+feet. Add `--agent-policy ./releases/uuce-agent-policy-1.1.0.json` to opt into
+the pinned expanded policy for length, mass, duration, area, volume and ratio.
+A blocked case reports its preflight decision and exits with code 2
 without sending the conversion request for that case. Plain `--live`
 continues to provide result comparison. Preflight appears as
 `production_preflight` on each selected case in the JSON report.
+
+## Use UUCE from an application
+
+The Python module and TypeScript source run the receipt and preflight checks
+before sending a conversion. Pass a binding from a separately trusted release
+record and explicitly confirm low-risk use for the current task.
+The [policy 1.1.0 release record](releases/uuce-agent-policy-1.1.0.json)
+contains the receipt binding and the digest of the approved unit groups.
+Both clients use policy `1.0.0` by default. Pass the trusted record as the
+optional `policy` argument to select `1.1.0`.
+
+```python
+import json
+from pathlib import Path
+from cvp_cli.uuce import convert_units
+
+policy = json.loads(Path("releases/uuce-agent-policy-1.1.0.json").read_bytes())
+binding = policy["binding"]
+inputs = {
+    "value": "2", "from_unit_id": "cx:kg", "to_unit_id": "cx:g",
+    "quantity_kind": "mass", "role": "scalar", "snapshot": binding["registry_version"],
+}
+response = convert_units(inputs, binding=binding, use_case="standalone_low_risk", policy=policy)
+print(response["result"]["exact"])
+```
+
+For TypeScript, import the [source module](sdk/typescript/uuce.ts) into an app
+that supports Fetch and Web Crypto. Use the same trusted policy, binding
+and input fields.
+
+```typescript
+import { convertUnits } from "./sdk/typescript/uuce.ts";
+
+const response = await convertUnits(inputs, { binding, useCase: "standalone_low_risk", policy });
+console.log(response.result.exact);
+```
+
+Both clients return the checked result and its preflight record. They throw
+`UuceError` for a rejection or a verification failure. HTTP 429 exposes the
+server's `Retry-After` value on the error as `retry_after` in Python and
+`retryAfter` in TypeScript.
 
 ## Publish a pack
 

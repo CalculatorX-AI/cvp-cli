@@ -6,7 +6,7 @@ from pathlib import Path
 
 from . import __version__
 from .live import MAX_LIVE_CASES, ProbeError, observe, observed_at, origin_url
-from .pack import PackError, load_pack, read_cases, require
+from .pack import MAX_MANIFEST_BYTES, PackError, _read_file, load_pack, parse_json, read_cases, require
 from .preflight import ORIGIN, USE_CASE, approve, pinned_binding
 from .reference import PROFILES
 
@@ -63,16 +63,20 @@ def verify(args, report):
     require(not selected or selected == {case["id"] for case in subset}, "Unknown --live-case ID")
     require(len(subset) <= MAX_LIVE_CASES, "Select up to 40 live cases with --live-case")
     binding = None
+    policy = None
     if args.release_record is not None:
         require(origin == ORIGIN, "Production preflight requires the CalculatorX production origin")
         binding = pinned_binding(args.release_record, manifest, digest)
+    if args.agent_policy is not None:
+        policy = parse_json(_read_file(args.agent_policy, MAX_MANIFEST_BYTES), "Trusted agent policy")
+        require(isinstance(policy, dict), "Expected a trusted agent policy record")
     report["live_probe"] = {"status": "ERROR", "origin": origin, "started_at": observed_at(), "cases": []}
     rows = report["live_probe"]["cases"]
     for case in subset:
         gate = {"decision": "UNAVAILABLE"} if binding is not None else None
         try:
             if binding is not None:
-                approve(profile.calculation_version, binding, case["inputs"], gate)
+                approve(profile.calculation_version, binding, case["inputs"], gate, policy=policy)
                 actual = observe(origin, profile, case["inputs"], binding=binding)
             else:
                 actual = observe(origin, profile, case["inputs"])
@@ -101,6 +105,7 @@ def main(argv=None):
     verify_parser.add_argument("--live-case", action="append", metavar="ID", help="Limit live requests to this case ID, repeatable")
     verify_parser.add_argument("--release-record", type=Path, help="Require production preflight with this separately trusted release record")
     verify_parser.add_argument("--use-case", choices=[USE_CASE], help="Confirm the selected cases are for standalone low-risk use")
+    verify_parser.add_argument("--agent-policy", type=Path, help="Opt into a separately trusted expanded UUCE policy record")
     verify_parser.add_argument("--json", action="store_true", help="Write a machine-readable report to stdout")
     args = parser.parse_args(argv)
     if args.signature and not args.public_key:
@@ -111,6 +116,8 @@ def main(argv=None):
         parser.error("--release-record requires --live, --live-case and --use-case")
     if args.use_case and not args.release_record:
         parser.error("--use-case requires --release-record")
+    if args.agent_policy and not args.release_record:
+        parser.error("--agent-policy requires --release-record")
 
     report = {
         "format": "cvp-replay-report-v1", "verifier_version": __version__,

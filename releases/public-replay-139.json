@@ -1,0 +1,25 @@
+{
+  "format": "calculatorx-cvp-replay-releases-v1",
+  "cli_repository": "https://github.com/CalculatorX-AI/cvp-cli",
+  "packs": [
+    {
+      "capability_id": "units.convert",
+      "calculation_version": "0.1.1",
+      "revision": "public-replay-139",
+      "profile": "uuce-v1",
+      "scope": "Agent scope evidence for heat transfer coefficient identity, part 1. Covers reference-unit identity and a structured conversion refusal.",
+      "minimum_cli_version": "0.1.0",
+      "case_count": 2,
+      "base_path": "/developers/cvp/packs/units.convert/0.1.1/public-replay-139",
+      "manifest_sha256": "d5b037b260e61221164540a5dc566742cb05c0f3678195c973c822e001985187",
+      "files": [
+        "manifest.json",
+        "cases.json",
+        "reference-units.json"
+      ],
+      "cvp_verification_revision": "2026-11-05.uuce-c6-v1",
+      "cvp_core_sha256": "151ae77934023fa10e8c6e4fdb34352a6aee9e973a9b345e304f5c34791518e8",
+      "cvp_manifest": "https://www.calculatorx.com/evidence/units.convert/0.1.1/2026-11-05.uuce-c6-v1.151ae7793402.cvp.json"
+    }
+  ]
+}

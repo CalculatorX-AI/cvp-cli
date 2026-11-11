@@ -1,6 +1,7 @@
 """Explicit, version-pinned HTTPS probes for built-in capability profiles."""
 
 import json
+import re
 from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
@@ -15,6 +16,11 @@ MAX_RESPONSE_BYTES = 256 * 1024
 
 class ProbeError(RuntimeError):
     """A response could not be obtained or interpreted."""
+
+    def __init__(self, message, *, status=None, retry_after=None):
+        super().__init__(message)
+        self.status = status
+        self.retry_after = retry_after
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -52,7 +58,7 @@ def request_json(url, *, body=None, statuses=(200,), version=None):
         with handle:
             status = handle.getcode()
             if status not in statuses:
-                raise ProbeError(f"Unexpected HTTP {status}")
+                raise ProbeError(f"Unexpected HTTP {status}", status=status, retry_after=handle.headers.get("Retry-After"))
             raw = handle.read(MAX_RESPONSE_BYTES + 1)
     except (URLError, OSError, TimeoutError) as error:
         raise ProbeError(f"HTTPS probe failed: {error}") from error
@@ -65,6 +71,37 @@ def request_json(url, *, body=None, statuses=(200,), version=None):
     if not isinstance(response, dict):
         raise ProbeError("HTTPS response must be a JSON object")
     return status, response
+
+
+def check_uuce_result(response, version, binding, inputs):
+    verification = response.get("verification")
+    if (response.get("status") != "success" or response.get("capability_id") != "units.convert"
+            or response.get("calculation_version") != version or not isinstance(verification, dict)
+            or verification.get("cvp") != "verified" or verification.get("calculation_version") != version
+            or verification.get("verification_revision") != binding["verification_revision"]
+            or verification.get("evidence_digest") != binding["cvp_core_sha256"]
+            or verification.get("execution_projection_sha256") != binding["execution_projection_sha256"]):
+        raise ProbeError("Live UUCE CVP binding differs from the approved request")
+    result = response.get("result")
+    snapshot = {
+        "version": binding["registry_version"], "content_digest": binding["definition_sha256"],
+        "execution_projection_sha256": binding["execution_projection_sha256"],
+        "integrity_manifest_sha256": binding["integrity_manifest_sha256"],
+    }
+    if (not isinstance(result, dict) or result.get("snapshot") != snapshot
+            or result.get("numerical_policy") != binding["numerical_policy"]
+            or result.get("input") != {key: inputs[key] for key in ("value", "quantity_kind", "role")}
+            or any(not isinstance(result.get(side), dict) or result[side].get("unit_id") != inputs[side + "_unit_id"]
+                   for side in ("from", "to"))):
+        raise ProbeError("Live UUCE input, units, snapshot or numerical policy differs from the approved request")
+    exact = result.get("exact")
+    if (not isinstance(exact, dict) or type(exact.get("pi_power")) is not int or exact["pi_power"] != 0
+            or not isinstance(exact.get("numerator"), str) or not re.fullmatch(r"[0-9]+", exact["numerator"])
+            or not isinstance(exact.get("denominator"), str) or not re.fullmatch(r"[1-9][0-9]*", exact["denominator"])
+            or not isinstance(result.get("decimal"), str)
+            or type(result.get("binary64")) not in (int, float) or result.get("binary64_status") != "finite"):
+        raise ProbeError("Invalid UUCE result for the approved scalar conversion")
+    return result
 
 
 def observe(origin, profile, inputs, *, binding=None):
@@ -83,13 +120,7 @@ def observe(origin, profile, inputs, *, binding=None):
         if response.get("status") != "success":
             raise ProbeError("HTTP 200 response lacks a success envelope")
         if binding is not None:
-            verification = response.get("verification")
-            if (not isinstance(verification, dict) or verification.get("cvp") != "verified"
-                    or verification.get("calculation_version") != profile.calculation_version
-                    or verification.get("verification_revision") != binding["verification_revision"]
-                    or verification.get("evidence_digest") != binding["cvp_core_sha256"]
-                    or verification.get("execution_projection_sha256") != binding["execution_projection_sha256"]):
-                raise ProbeError("Live UUCE CVP binding differs from the approved request")
+            check_uuce_result(response, profile.calculation_version, binding, inputs)
         try:
             return profile.observe(response, inputs)
         except PackError as error:

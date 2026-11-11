@@ -1,0 +1,86 @@
+{
+  "format": "calculatorx-uuce-agent-client-pins-v1",
+  "capability_id": "units.convert",
+  "calculation_version": "0.1.1",
+  "policy_version": "1.1.0",
+  "binding": {
+    "profile": "engineering",
+    "verification_revision": "2026-11-05.uuce-c6-v1",
+    "cvp_core_sha256": "151ae77934023fa10e8c6e4fdb34352a6aee9e973a9b345e304f5c34791518e8",
+    "registry_version": "0.3.0-preview.3",
+    "definition_sha256": "75c66c1e40753435643e728731261a8b7e4c760649cb662c5883249d1f2ecacb",
+    "execution_projection_sha256": "b22cd71baa090908c21a75a86b52d87cab1be0bd2f965156e40c166f2442fbc4",
+    "integrity_manifest_sha256": "ec4360ac1db7cfa18550d955fe4afca333295b74b2348bfd6a40cf8419d0aef0",
+    "numerical_policy": "uuce-rational-pi-decimal34-v1"
+  },
+  "policy_sha256": "a34e1fdc79c5bc8e679be5646f2e5ac4af157420a2db37b8ee1ed6500ed2e5ff",
+  "groups": {
+    "length": [
+      "cx:m",
+      "cx:km",
+      "cx:dm",
+      "cx:cm",
+      "cx:mm",
+      "cx:um",
+      "cx:nm",
+      "cx:ft_i",
+      "cx:in_i",
+      "cx:yd_i",
+      "cx:mi_i"
+    ],
+    "mass": [
+      "cx:kg",
+      "cx:t",
+      "cx:g",
+      "cx:mg",
+      "cx:ug",
+      "cx:lb_av",
+      "cx:oz_av",
+      "cx:st"
+    ],
+    "duration": [
+      "cx:s",
+      "cx:ms",
+      "cx:us",
+      "cx:ns",
+      "cx:ps",
+      "cx:min",
+      "cx:h",
+      "cx:d",
+      "cx:week"
+    ],
+    "area": [
+      "cx:m2",
+      "cx:mm2",
+      "cx:cm2",
+      "cx:km2",
+      "cx:ha",
+      "cx:in2_i",
+      "cx:ft2_i"
+    ],
+    "volume": [
+      "cx:m3",
+      "cx:L",
+      "cx:mL",
+      "cx:uL",
+      "cx:mm3",
+      "cx:cm3",
+      "cx:in3_i",
+      "cx:ft3_i",
+      "cx:yd3_i",
+      "cx:gal_us",
+      "cx:qt_us",
+      "cx:pt_us",
+      "cx:floz_us",
+      "cx:gal_imp",
+      "cx:qt_imp",
+      "cx:pt_imp",
+      "cx:floz_imp"
+    ],
+    "ratio": [
+      "cx:one",
+      "cx:percent",
+      "cx:ppm"
+    ]
+  }
+}
